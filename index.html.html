@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Bin Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        #records {
+            margin-top: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h2>Employee Bin Management System</h2>
+    <div class="form-group">
+        <label for="idNumber">ID Number:</label>
+        <input type="text" id="idNumber" required>
+    </div>
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required>
+    </div>
+    <div class="form-group">
+        <label for="binNumber">Bin Number:</label>
+        <select id="binNumber" required>
+            <option value="">Select a bin</option>
+            <option value="1">Bin 1</option>
+            <option value="2">Bin 2</option>
+            <option value="3">Bin 3</option>
+        </select>
+    </div>
+    <button onclick="saveData()">Submit</button>
+    <button onclick="copyTable()">Copy Table</button>
+
+    <div id="records">
+        <h3>Saved Records:</h3>
+        <div id="recordsList"></div>
+    </div>
+
+    <script>
+        function saveData() {
+            const idNumber = document.getElementById('idNumber').value;
+            const name = document.getElementById('name').value;
+            const binNumber = document.getElementById('binNumber').value;
+            
+            if (!idNumber || !name || !binNumber) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            const record = {
+                idNumber,
+                name,
+                binNumber,
+                timestamp: new Date().toISOString()
+            };
+
+            let records = JSON.parse(localStorage.getItem('binRecords') || '[]');
+            records.push(record);
+            localStorage.setItem('binRecords', JSON.stringify(records));
+
+            document.getElementById('idNumber').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('binNumber').value = '';
+
+            displayRecords();
+
+            // (Optional) Send command to ESP32 to open the selected bin (uncomment and set your ESP32 IP)
+            // fetch(`http://<ESP32_IP>/open-bin?bin=${record.binNumber}`, { method: 'POST' });
+        }
+
+        function displayRecords() {
+            const records = JSON.parse(localStorage.getItem('binRecords') || '[]');
+            const recordsList = document.getElementById('recordsList');
+            if (records.length === 0) {
+                recordsList.innerHTML = "<p>No records saved yet.</p>";
+                return;
+            }
+            let html = `<table>
+                <tr>
+                    <th>ID Number</th>
+                    <th>Name</th>
+                    <th>Bin Number</th>
+                    <th>Timestamp</th>
+                </tr>`;
+            records.forEach(record => {
+                html += `<tr>
+                    <td>${record.idNumber}</td>
+                    <td>${record.name}</td>
+                    <td>${record.binNumber}</td>
+                    <td>${new Date(record.timestamp).toLocaleString()}</td>
+                </tr>`;
+            });
+            html += "</table>";
+            recordsList.innerHTML = html;
+        }
+
+        function copyTable() {
+            const range = document.createRange();
+            const table = document.querySelector("#recordsList table");
+            if (!table) {
+                alert("No table to copy!");
+                return;
+            }
+            range.selectNode(table);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand("copy");
+            window.getSelection().removeAllRanges();
+            alert("Table copied! Paste into Excel or Google Sheets.");
+        }
+
+        // Display records on page load
+        displayRecords();
+    </script>
+</body>
+</html>
