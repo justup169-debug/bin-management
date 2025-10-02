@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Employee Bin Management</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
+    label { display: block; margin: 8px 0 4px; }
+    input, select { width: 100%; padding: 6px; margin-bottom: 10px; }
+    button { background: #4CAF50; color: white; padding: 10px; border: none; margin: 5px; cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h2>Employee Bin Management System</h2>
+
+  <label for="idNumber">ID Number:</label>
+  <input type="text" id="idNumber" required>
+
+  <label for="name">Name:</label>
+  <input type="text" id="name" required>
+
+  <label for="binNumber">Bin Number:</label>
+  <select id="binNumber" required>
+    <option value="">Select a bin</option>
+    <option value="1">Bin 1</option>
+    <option value="2">Bin 2</option>
+    <option value="3">Bin 3</option>
+  </select>
+
+  <button onclick="saveData()">Submit</button>
+
+  <div id="records">
+    <h3>Saved Records:</h3>
+    <div id="recordsList"></div>
+  </div>
+
+  <script>
+    // 🔹 Change this to your ESP32 IP (check Serial Monitor after uploading ESP32 code)
+    const esp32_ip = "http://192.168.232.237";
+
+    function saveData() {
+      const idNumber = document.getElementById('idNumber').value;
+      const name = document.getElementById('name').value;
+      const binNumber = document.getElementById('binNumber').value;
+
+      if (!idNumber || !name || !binNumber) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      // Save record locally
+      const record = { idNumber, name, binNumber, timestamp: new Date().toISOString() };
+      let records = JSON.parse(localStorage.getItem('binRecords') || '[]');
+      records.push(record);
+      localStorage.setItem('binRecords', JSON.stringify(records));
+
+      // Clear form
+      document.getElementById('idNumber').value = '';
+      document.getElementById('name').value = '';
+      document.getElementById('binNumber').value = '';
+
+      displayRecords();
+
+      // 🔹 Tell ESP32 to open (ESP32 will auto-close itself)
+      fetch(`${esp32_ip}/open?servo=${record.binNumber}`)
+        .then(res => res.text())
+        .then(data => console.log(data))
+        .catch(err => console.error("Error:", err));
+    }
+
+    function displayRecords() {
+      const records = JSON.parse(localStorage.getItem('binRecords') || '[]');
+      const recordsList = document.getElementById('recordsList');
+      if (records.length === 0) {
+        recordsList.innerHTML = "<p>No records saved yet.</p>";
+        return;
+      }
+      let html = `<table>
+        <tr><th>ID Number</th><th>Name</th><th>Bin Number</th><th>Timestamp</th></tr>`;
+      records.forEach(r => {
+        html += `<tr>
+          <td>${r.idNumber}</td>
+          <td>${r.name}</td>
+          <td>${r.binNumber}</td>
+          <td>${new Date(r.timestamp).toLocaleString()}</td>
+        </tr>`;
+      });
+      html += "</table>";
+      recordsList.innerHTML = html;
+    }
+
+    // Show records on page load
+    displayRecords();
+  </script>
+</body>
+</html>
