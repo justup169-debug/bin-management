@@ -1,188 +1,99 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Employee Bin Management</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            cursor: pointer;
-            margin: 5px;
-        }
-        #records {
-            margin-top: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        table, th, td {
-            border: 1px solid #ccc;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background: #f0f0f0;
-        }
-        .servo-controls {
-            margin-top: 30px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        .servo-controls h3 {
-            margin-bottom: 10px;
-        }
-    </style>
+  <title>Employee Bin Management</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
+    label { display: block; margin: 8px 0 4px; }
+    input, select { width: 100%; padding: 6px; margin-bottom: 10px; }
+    button { background: #4CAF50; color: white; padding: 10px; border: none; margin: 5px; cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
 </head>
 <body>
-    <h2>Employee Bin Management System</h2>
+  <h2>Employee Bin Management System</h2>
 
-    <div class="form-group">
-        <label for="idNumber">ID Number:</label>
-        <input type="text" id="idNumber" required>
-    </div>
-    <div class="form-group">
-        <label for="name">Name:</label>
-        <input type="text" id="name" required>
-    </div>
-    <div class="form-group">
-        <label for="binNumber">Bin Number:</label>
-        <select id="binNumber" required>
-            <option value="">Select a bin</option>
-            <option value="1">Bin 1</option>
-            <option value="2">Bin 2</option>
-            <option value="3">Bin 3</option>
-        </select>
-    </div>
-    <button onclick="saveData()">Submit</button>
-    <button onclick="copyTable()">Copy Table</button>
+  <label for="idNumber">ID Number:</label>
+  <input type="text" id="idNumber" required>
 
-    <div id="records">
-        <h3>Saved Records:</h3>
-        <div id="recordsList"></div>
-    </div>
+  <label for="name">Name:</label>
+  <input type="text" id="name" required>
 
-    <!-- 🔹 Servo Control Section -->
-    <div class="servo-controls">
-        <h3>Servo Controls</h3>
-        <p>Control the bins directly from here:</p>
-        <button onclick="controlServo(1, 'open')">Open Servo 1</button>
-        <button onclick="controlServo(1, 'close')">Close Servo 1</button><br>
-        <button onclick="controlServo(2, 'open')">Open Servo 2</button>
-        <button onclick="controlServo(2, 'close')">Close Servo 2</button><br>
-        <button onclick="controlServo(3, 'open')">Open Servo 3</button>
-        <button onclick="controlServo(3, 'close')">Close Servo 3</button>
-    </div>
+  <label for="binNumber">Bin Number:</label>
+  <select id="binNumber" required>
+    <option value="">Select a bin</option>
+    <option value="1">Bin 1</option>
+    <option value="2">Bin 2</option>
+    <option value="3">Bin 3</option>
+  </select>
 
-    <script>
-        // 🔹 CHANGE THIS to your ESP32 IP from Serial Monitor
-        const esp32_ip = ""http://192.168.232.237"";
+  <button onclick="saveData()">Submit</button>
 
-        function saveData() {
-            const idNumber = document.getElementById('idNumber').value;
-            const name = document.getElementById('name').value;
-            const binNumber = document.getElementById('binNumber').value;
-            
-            if (!idNumber || !name || !binNumber) {
-                alert('Please fill all fields');
-                return;
-            }
+  <div id="records">
+    <h3>Saved Records:</h3>
+    <div id="recordsList"></div>
+  </div>
 
-            const record = {
-                idNumber,
-                name,
-                binNumber,
-                timestamp: new Date().toISOString()
-            };
+  <script>
+    // 🔹 Change this to your ESP32 IP
+    const esp32_ip = "http://192.168.232.237";
 
-            let records = JSON.parse(localStorage.getItem('binRecords') || '[]');
-            records.push(record);
-            localStorage.setItem('binRecords', JSON.stringify(records));
+    function saveData() {
+      const idNumber = document.getElementById('idNumber').value;
+      const name = document.getElementById('name').value;
+      const binNumber = document.getElementById('binNumber').value;
 
-            document.getElementById('idNumber').value = '';
-            document.getElementById('name').value = '';
-            document.getElementById('binNumber').value = '';
+      if (!idNumber || !name || !binNumber) {
+        alert("Please fill all fields");
+        return;
+      }
 
-            displayRecords();
+      // Save record locally
+      const record = { idNumber, name, binNumber, timestamp: new Date().toISOString() };
+      let records = JSON.parse(localStorage.getItem('binRecords') || '[]');
+      records.push(record);
+      localStorage.setItem('binRecords', JSON.stringify(records));
 
-            // Optionally: Open the selected bin automatically
-            controlServo(record.binNumber, 'open');
-        }
+      // Clear form
+      document.getElementById('idNumber').value = '';
+      document.getElementById('name').value = '';
+      document.getElementById('binNumber').value = '';
 
-        function displayRecords() {
-            const records = JSON.parse(localStorage.getItem('binRecords') || '[]');
-            const recordsList = document.getElementById('recordsList');
-            if (records.length === 0) {
-                recordsList.innerHTML = "<p>No records saved yet.</p>";
-                return;
-            }
-            let html = `<table>
-                <tr>
-                    <th>ID Number</th>
-                    <th>Name</th>
-                    <th>Bin Number</th>
-                    <th>Timestamp</th>
-                </tr>`;
-            records.forEach(record => {
-                html += `<tr>
-                    <td>${record.idNumber}</td>
-                    <td>${record.name}</td>
-                    <td>${record.binNumber}</td>
-                    <td>${new Date(record.timestamp).toLocaleString()}</td>
-                </tr>`;
-            });
-            html += "</table>";
-            recordsList.innerHTML = html;
-        }
+      displayRecords();
 
-        function copyTable() {
-            const range = document.createRange();
-            const table = document.querySelector("#recordsList table");
-            if (!table) {
-                alert("No table to copy!");
-                return;
-            }
-            range.selectNode(table);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-            document.execCommand("copy");
-            window.getSelection().removeAllRanges();
-            alert("Table copied! Paste into Excel or Google Sheets.");
-        }
+      // 🔹 Tell ESP32 to open (ESP32 will auto-close itself)
+      fetch(`${esp32_ip}/open?servo=${record.binNumber}`)
+        .then(res => res.text())
+        .then(data => console.log(data))
+        .catch(err => console.error("Error:", err));
+    }
 
-        // 🔹 Send control command to ESP32
-        function controlServo(servo, action) {
-            fetch(`${esp32_ip}/${action}?servo=${servo}`)
-                .then(res => res.text())
-                .then(data => alert(data))
-                .catch(err => alert("Error: " + err));
-        }
+    function displayRecords() {
+      const records = JSON.parse(localStorage.getItem('binRecords') || '[]');
+      const recordsList = document.getElementById('recordsList');
+      if (records.length === 0) {
+        recordsList.innerHTML = "<p>No records saved yet.</p>";
+        return;
+      }
+      let html = `<table>
+        <tr><th>ID Number</th><th>Name</th><th>Bin Number</th><th>Timestamp</th></tr>`;
+      records.forEach(r => {
+        html += `<tr>
+          <td>${r.idNumber}</td>
+          <td>${r.name}</td>
+          <td>${r.binNumber}</td>
+          <td>${new Date(r.timestamp).toLocaleString()}</td>
+        </tr>`;
+      });
+      html += "</table>";
+      recordsList.innerHTML = html;
+    }
 
-        // Show records on load
-        displayRecords();
-    </script>
+    // Show records on page load
+    displayRecords();
+  </script>
 </body>
 </html>
+
