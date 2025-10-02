@@ -27,7 +27,7 @@
             padding: 10px 15px;
             border: none;
             cursor: pointer;
-            margin-right: 10px;
+            margin: 5px;
         }
         #records {
             margin-top: 20px;
@@ -46,10 +46,20 @@
         th {
             background: #f0f0f0;
         }
+        .servo-controls {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .servo-controls h3 {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
     <h2>Employee Bin Management System</h2>
+
     <div class="form-group">
         <label for="idNumber">ID Number:</label>
         <input type="text" id="idNumber" required>
@@ -75,7 +85,22 @@
         <div id="recordsList"></div>
     </div>
 
+    <!-- 🔹 Servo Control Section -->
+    <div class="servo-controls">
+        <h3>Servo Controls</h3>
+        <p>Control the bins directly from here:</p>
+        <button onclick="controlServo(1, 'open')">Open Servo 1</button>
+        <button onclick="controlServo(1, 'close')">Close Servo 1</button><br>
+        <button onclick="controlServo(2, 'open')">Open Servo 2</button>
+        <button onclick="controlServo(2, 'close')">Close Servo 2</button><br>
+        <button onclick="controlServo(3, 'open')">Open Servo 3</button>
+        <button onclick="controlServo(3, 'close')">Close Servo 3</button>
+    </div>
+
     <script>
+        // 🔹 CHANGE THIS to your ESP32 IP from Serial Monitor
+        const esp32_ip = "http://192.168.1.50";
+
         function saveData() {
             const idNumber = document.getElementById('idNumber').value;
             const name = document.getElementById('name').value;
@@ -103,8 +128,8 @@
 
             displayRecords();
 
-            // (Optional) Send command to ESP32 to open the selected bin (uncomment and set your ESP32 IP)
-            // fetch(`http://<ESP32_IP>/open-bin?bin=${record.binNumber}`, { method: 'POST' });
+            // Optionally: Open the selected bin automatically
+            controlServo(record.binNumber, 'open');
         }
 
         function displayRecords() {
@@ -148,9 +173,16 @@
             alert("Table copied! Paste into Excel or Google Sheets.");
         }
 
-        // Display records on page load
+        // 🔹 Send control command to ESP32
+        function controlServo(servo, action) {
+            fetch(`${esp32_ip}/${action}?servo=${servo}`)
+                .then(res => res.text())
+                .then(data => alert(data))
+                .catch(err => alert("Error: " + err));
+        }
+
+        // Show records on load
         displayRecords();
     </script>
 </body>
-
 </html>
